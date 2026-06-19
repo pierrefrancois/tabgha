@@ -24,3 +24,19 @@ this third-party text, which remains under its respective copyright.
 
 Anyone redistributing this repository, or output that embeds such readings,
 should review USCCB / CCD permissions first.
+
+===============================================================================
+PROJECT CONTEXT AND INTENT
+===============================================================================
+
+tabgha is one component of a larger project that gathers liturgical texts from a
+wide range of languages and copyright holders. Working directly on the official
+texts is essential to that work, so the example/reference files above are kept
+deliberately rather than replaced with substitutes.
+
+When the larger project is published, the CODE (which we own and license) will be
+kept separate from the COLLECTED DATA (texts copied from others), so that it is
+always clear what is authored by us and what is reproduced from third parties,
+each under its own copyright and permissions.
+
+Until then, this notice records that distinction.
