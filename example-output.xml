@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<romanliturgy lingua="en">
+  <die>Monday after Pentecost</die>
+  <gradus>Memorial</gradus>
+  <elementum nomen="lectio" optio="Gen">
+    <thema/>
+    <referentia elibro="Gen">
+      <ab>
+        <cap>3</cap>
+        <vers>9</vers>
+      </ab>
+      <ad>
+        <cap>3</cap>
+        <vers>15</vers>
+      </ad>
+      <cap>3</cap>
+      <vers>20</vers>
+    </referentia>
+    <para>After Adam had eaten of the tree,<l/>
+      the LORD God called to him and asked him, <q>Where are you?</q><l/>
+      He answered, <q>I heard you in the garden;<l/>
+        but I was afraid, because I was naked,<l/>
+        so I hid myself.</q><l/>
+      Then he asked, <q>Who told you that you were naked?<l/>
+        You have eaten, then,<l/>
+        from the tree of which I had forbidden you to eat!</q><l/>
+      The man replied, <q>The woman whom you put here with me—<l/>
+        she gave me fruit from the tree, and so I ate it.</q><l/>
+      The LORD God then asked the woman,<l/>
+      <q>Why did you do such a thing?</q><l/>
+      The woman answered, 
+      <q>The serpent tricked me into it, so I ate it.</q><l/>
+      Then the LORD God said to the serpent:<l/>
+      <q>Because you have done this, you shall be banned<l/>
+        from all the animals<l/>
+        and from all the wild creatures;<l/>
+        On your belly shall you crawl,<l/>
+        and dirt shall you eat<l/>
+        all the days of your life.<l/>
+        I will put enmity between you and the woman,<l/>
+        and between your offspring and hers;<l/>
+        He will strike at your head,<l/>
+        while you strike at his heel.</q><l/>
+      The man called his wife Eve,<l/>
+      because she became the mother of all the living.
+    </para>
+    <verbum-domini/>
+  </elementum>
+  <vel/>
+  <elementum nomen="lectio" optio="Act">
+    <thema/>
+    <referentia elibro="Act">
+      <ab>
+        <cap>1</cap>
+        <vers>12</vers>
+      </ab>
+      <ad>
+        <cap>1</cap>
+        <vers>14</vers>
+      </ad>
+    </referentia>
+    <para>After Jesus had been taken up to heaven,<l/>
+      the Apostles returned to Jerusalem<l/>
+      from the mount called Olivet, which is near Jerusalem,<l/>
+      a sabbath day’s journey away.<l/>
+      When they entered the city<l/>
+      they went to the upper room where they were staying,<l/>
+      Peter and John and James and Andrew,<l/>
+      Philip and Thomas, Bartholomew and Matthew,<l/>
+      James son of Alphaeus, Simon the Zealot,<l/>
+      and Judas son of James.<l/>
+      All these devoted themselves with one accord to prayer,<l/>
+      together with some women,<l/>
+      and Mary the mother of Jesus, and his brothers.
+    </para>
+    <verbum-domini/>
+  </elementum>
+  <elementum nomen="psalmus-responsorialis">
+    <referentia elibro="Ps">
+      <stropha>
+        <ab>
+          <cap>87</cap>
+          <vers>1</vers>
+        </ab>
+        <ad>
+          <cap>87</cap>
+          <vers>2</vers>
+        </ad>
+      </stropha>
+      <stropha>
+        <cap>87</cap>
+        <vers>3</vers>
+        <cap>87</cap>
+        <vers>5</vers>
+      </stropha>
+      <stropha>
+        <ab>
+          <cap>87</cap>
+          <vers>6</vers>
+        </ab>
+        <ad>
+          <cap>87</cap>
+          <vers>7</vers>
+        </ad>
+      </stropha>
+    </referentia>
+    <para>
+      <r>Glorious things are said of you, O city of God!</r>
+    </para>
+    <para>His foundation upon the holy mountains<n/>
+      the LORD loves:<n/>
+      The gates of Zion,<n/>
+      more than any dwelling of Jacob. <r/>
+    </para>
+    <para>Glorious things are said of you,<n/>
+      O city of God!<n/>
+      And of Zion they shall say:<n/>
+      <q>One and all were born in her;<n/>
+        And he who has established her<n/>
+        is the Most High LORD.</q> <r/>
+    </para>
+    <para>They shall note, when the peoples are enrolled:<n/>
+      <q>This man was born there.</q><n/>
+      And all shall sing, in their festive dance:<n/>
+      <q>My home is within you.</q> <r/>
+    </para>
+  </elementum>
+  <elementum nomen="alleluia">
+    <para><r>Alleluia.</r><l/>
+      O joyful Virgin, who gave birth to the Lord;<l/>
+      O blessed Mother of the Church,<l/>
+      who nurture in us the Spirit<l/>
+      of your Son Jesus Christ! <r/>
+    </para>
+  </elementum>
+  <elementum nomen="evangelium">
+    <thema/>
+    <referentia elibro="Io">
+      <ab>
+        <cap>19</cap>
+        <vers>25</vers>
+      </ab>
+      <ad>
+        <cap>19</cap>
+        <vers>34</vers>
+      </ad>
+    </referentia>
+    <para>Standing by the cross of Jesus were his mother<l/>
+      and his mother’s sister, Mary the wife of Clopas,<l/>
+      and Mary of Magdala.<l/>
+      When Jesus saw his mother and the disciple there whom he loved,<l/>
+      he said to his mother, <q>Woman, behold, your son.</q><l/>
+      Then he said to the disciple,<l/>
+      <q>Behold, your mother.</q><l/>
+      And from that hour the disciple took her into his home.<l/>
+      After this, aware that everything was now finished,<l/>
+      in order that the Scripture might be fulfilled,<l/>
+      Jesus said, <q>I thirst.</q><l/>
+      There was a vessel filled with common wine.<l/>
+      So they put a sponge soaked in wine on a sprig of hyssop<l/>
+      and put it up to his mouth.<l/>
+      When Jesus had taken the wine, he said,<l/>
+      <q>It is finished.</q><l/>
+      And bowing his head, he handed over the spirit.<l/>
+      Now since it was preparation day,<l/>
+      in order that the bodies might not remain on the cross on the sabbath,<l/>
+      for the sabbath day of that week was a solemn one,<l/>
+      the Jews asked Pilate that their legs be broken<l/>
+      and they be taken down.<l/>
+      So the soldiers came and broke the legs of the first<l/>
+      and then of the other one who was crucified with Jesus.<l/>
+      But when they came to Jesus and saw that he was already dead,<l/>
+      they did not break his legs,<l/>
+      but one soldier thrust his lance into his side,<l/>
+      and immediately Blood and water flowed out.
+    </para>
+    <verbum-domini/>
+  </elementum>
+</romanliturgy>

@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+# tabgha — gather a liturgy source document and transform it into romanliturgy XML.
+#
+# Three-stage pipeline (all tools open source, present on this system):
+#   1. fetch / locate  : curl (URL) or copy (local file)
+#   2. normalize       : xmllint --html --xmlout   (HTML5 -> well-formed XHTML)
+#   3. transform       : xsltproc                  (XSLT 1.0 -> romanliturgy XML)
+# The result is validated for well-formedness with xmllint.
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: tabgha [options] <source>
+
+  <source>   A URL (http/https) or a local file (.html/.htm/.xhtml).
+             (.odt and .pdf front-ends are planned; not yet implemented.)
+
+Options:
+  -l LANG    Language code for the record (default: en). Sets the root @lingua
+             and is used in the output filename.
+  -o KEY     Output day-key, e.g. s0531. Output goes to build/<KEY>-<LANG>.xml.
+             Default: out.
+  -s FILE    XSLT stylesheet (default: <repo>/xslt/usccb-readings.xsl).
+  -d TEXT    Value for <die>   (not derivable from the HTML; optional).
+  -g TEXT    Value for <gradus> (not derivable from the HTML; optional).
+  -k         Keep intermediate files (fetched HTML + normalized XHTML).
+  -h         Show this help.
+EOF
+}
+
+LANG_CODE=en          # NB: not $LANG, to avoid clobbering the locale variable
+OUT=out
+XSL=""
+DIE=""
+GRADUS=""
+KEEP=0
+
+while getopts ":l:o:s:d:g:kh" opt; do
+  case "$opt" in
+    l) LANG_CODE=$OPTARG ;;
+    o) OUT=$OPTARG ;;
+    s) XSL=$OPTARG ;;
+    d) DIE=$OPTARG ;;
+    g) GRADUS=$OPTARG ;;
+    k) KEEP=1 ;;
+    h) usage; exit 0 ;;
+    :) echo "tabgha: option -$OPTARG requires an argument" >&2; exit 2 ;;
+    \?) echo "tabgha: unknown option -$OPTARG" >&2; exit 2 ;;
+  esac
+done
+shift $((OPTIND - 1))
+
+[ $# -eq 1 ] || { usage >&2; exit 2; }
+SRC=$1
+
+ROOT=$(cd "$(dirname "$0")/.." && pwd)
+: "${XSL:=$ROOT/xslt/usccb-readings.xsl}"
+BUILD=$ROOT/build
+mkdir -p "$BUILD"
+
+work=$(mktemp -d)
+cleanup() { [ "$KEEP" -eq 1 ] || rm -rf "$work"; }
+trap cleanup EXIT
+
+raw=$work/raw.html
+xhtml=$work/norm.xhtml
+out_file=$BUILD/${OUT}-${LANG_CODE}.xml
+
+# 1) fetch / locate
+case "$SRC" in
+  http://*|https://*)
+    echo "[1/3] fetch     : curl $SRC"
+    curl -fsSL "$SRC" -o "$raw"
+    ;;
+  *)
+    echo "[1/3] fetch     : local file $SRC"
+    [ -f "$SRC" ] || { echo "tabgha: no such file: $SRC" >&2; exit 1; }
+    cp "$SRC" "$raw"
+    ;;
+esac
+
+# 2) normalize HTML5 -> well-formed XHTML (so XSLT 1.0 can parse it)
+echo "[2/3] normalize : xmllint --html --xmlout"
+xmllint --html --xmlout --nowarning "$raw" > "$xhtml" 2>/dev/null
+
+# 3) transform -> romanliturgy XML
+echo "[3/3] transform : xsltproc -> $out_file"
+xsltproc \
+  --stringparam lingua "$LANG_CODE" \
+  --stringparam die    "$DIE" \
+  --stringparam gradus "$GRADUS" \
+  "$XSL" "$xhtml" > "$out_file"
+
+# validate the result is well-formed
+xmllint --noout "$out_file"
+echo "OK: wrote $out_file ($(wc -l < "$out_file") lines), well-formed."
+[ "$KEEP" -eq 1 ] && echo "kept intermediates in $work" || true

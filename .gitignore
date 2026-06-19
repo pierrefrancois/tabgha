@@ -1,0 +1,6 @@
+# generated output
+/build/
+
+# editor swap/backup files
+*.swp
+*~
