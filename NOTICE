@@ -1,0 +1,26 @@
+tabgha
+Copyright (C) 2026 Pierre François
+Licensed under the GNU General Public License v3.0 or later (see LICENSE).
+
+===============================================================================
+THIRD-PARTY CONTENT — NOT covered by the GPL above
+===============================================================================
+
+The reference/example files in this repository contain copyrighted material that
+is NOT part of the licensed software and is NOT redistributable under the GPL:
+
+  - example-input.html
+        A daily-readings page from the website of the United States Conference
+        of Catholic Bishops (USCCB). © USCCB.
+
+  - example-output.xml
+        Derived from the above; embeds Scripture in the New American Bible,
+        Revised Edition (NABRE). © Confraternity of Christian Doctrine (CCD),
+        Washington, D.C.
+
+These files are included only as a worked illustration of the source -> XML
+transformation. The GNU GPL applies to the tabgha software (bin/, xslt/), NOT to
+this third-party text, which remains under its respective copyright.
+
+Anyone redistributing this repository, or output that embeds such readings,
+should review USCCB / CCD permissions first.

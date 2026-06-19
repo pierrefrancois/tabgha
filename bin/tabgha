@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # tabgha — gather a liturgy source document and transform it into romanliturgy XML.
 #
+# Copyright (C) 2026 Pierre François
+# SPDX-License-Identifier: GPL-3.0-or-later
+# This program is free software under the GNU General Public License, version 3
+# or (at your option) any later version. See the LICENSE file for the full text.
+#
 # Three-stage pipeline (all tools open source, present on this system):
 #   1. fetch / locate  : curl (URL) or copy (local file)
 #   2. normalize       : xmllint --html --xmlout   (HTML5 -> well-formed XHTML)

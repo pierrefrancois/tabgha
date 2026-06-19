@@ -3,6 +3,11 @@
   usccb-readings.xsl — transform a normalized USCCB daily-readings page (XHTML,
   as produced by xmllint's HTML parser) into romanliturgy XML.
 
+  Copyright (C) 2026 Pierre François
+  SPDX-License-Identifier: GPL-3.0-or-later
+  Free software under the GNU General Public License, version 3 or (at your
+  option) any later version. See the LICENSE file for the full text.
+
   XSLT 1.0, run with xsltproc. NOTE: xmllint's HTML parser emits a NO-namespace
   tree (the <html> element has no xmlns), so source patterns use bare element
   names (div, h3, ...). When we add the ODT front-end, content.xml IS namespaced

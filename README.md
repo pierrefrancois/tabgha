@@ -117,3 +117,15 @@ diff <(tr -s ' \t\n' ' ' < build/example-en.xml) <(tr -s ' \t\n' ' ' < example-o
 (This assumes the downstream XSLT collapses inter-text whitespace — consistent with
 the explicit-break-tag design, but that project is not in this repo, so confirm there
 if rendered output ever looks wrong.)
+
+## License
+
+tabgha is free software, licensed under the **GNU General Public License v3.0 or
+later** (`GPL-3.0-or-later`) — see [LICENSE](LICENSE). You may use, study, share and
+modify it; any *distributed* derivative must remain open-source under the same terms.
+
+**Third-party content (not under the GPL):** the reference files
+`example-input.html` and `example-output.xml` contain USCCB / New American Bible
+(Revised Edition) text that is © USCCB / Confraternity of Christian Doctrine. It is
+included only as a worked illustration and is **not** covered by this project's
+license — see [NOTICE](NOTICE).
