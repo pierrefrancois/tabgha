@@ -33,10 +33,36 @@
   <!-- No strip-space: inside reading text, a whitespace-only text node between
        inline <span>s is significant (e.g. the space in "LORD loves"). -->
 
-  <!-- Values not derivable from the HTML; supplied by the driver (-d / -g). -->
+  <!-- Record language; supplied by the driver (-l). -->
   <xsl:param name="lingua" select="'en'"/>
-  <xsl:param name="die"    select="''"/>
-  <xsl:param name="gradus" select="''"/>
+
+  <!-- <die>: the current date in the pager just above the title,
+       <li class="current"><time>May 25, 2026</time></li> -> "May 25" (year dropped).
+       Empty (=> no <die> element) when the page has no such date. -->
+  <xsl:variable name="date-text"
+      select="normalize-space((//li[contains(concat(' ', normalize-space(@class), ' '), ' current ')]/time)[1])"/>
+  <xsl:variable name="die">
+    <xsl:choose>
+      <xsl:when test="contains($date-text, ',')">
+        <xsl:value-of select="normalize-space(substring-before($date-text, ','))"/>
+      </xsl:when>
+      <xsl:otherwise><xsl:value-of select="$date-text"/></xsl:otherwise>
+    </xsl:choose>
+  </xsl:variable>
+
+  <!-- <gradus>: rank named in the celebration title (<h2> of div.b-lectionary).
+       Solemnity -> solemnitas, Feast -> festum, Memorial -> memoria; otherwise
+       (e.g. a plain weekday) no <gradus> element. -->
+  <xsl:variable name="title-lc"
+      select="translate(normalize-space((//div[contains(concat(' ', normalize-space(@class), ' '), ' b-lectionary ')]//h2)[1]),
+                        'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')"/>
+  <xsl:variable name="gradus">
+    <xsl:choose>
+      <xsl:when test="contains($title-lc, 'solemnity')">solemnitas</xsl:when>
+      <xsl:when test="contains($title-lc, 'feast')">festum</xsl:when>
+      <xsl:when test="contains($title-lc, 'memorial')">memoria</xsl:when>
+    </xsl:choose>
+  </xsl:variable>
 
   <!-- Book name -> elibro code lookup (extend as new sources appear). -->
   <xsl:variable name="books-rtf">
@@ -96,8 +122,8 @@
 
   <xsl:template match="/">
     <romanliturgy lingua="{$lingua}">
-      <die><xsl:value-of select="$die"/></die>
-      <gradus><xsl:value-of select="$gradus"/></gradus>
+      <xsl:if test="string($die) != ''"><die><xsl:value-of select="$die"/></die></xsl:if>
+      <xsl:if test="string($gradus) != ''"><gradus><xsl:value-of select="$gradus"/></gradus></xsl:if>
       <xsl:apply-templates select="$verse-blocks" mode="reading"/>
     </romanliturgy>
   </xsl:template>

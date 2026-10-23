@@ -32,15 +32,13 @@ bin/tabgha [options] <source>      # <source> = URL or local .html file
   -l LANG    language code -> root @lingua and filename (default: en)
   -o KEY     output day-key -> build/<KEY>-<LANG>.xml (default: out)
   -s FILE    stylesheet (default: xslt/usccb-readings.xsl)
-  -d TEXT    <die>   value (not in the HTML; supply manually)
-  -g TEXT    <gradus> value (not in the HTML; supply manually)
   -k         keep intermediate files
 ```
 
 Example (reproduces the reference pair):
 
 ```sh
-bin/tabgha -o example -l en -d "Monday after Pentecost" -g "Memorial" example-input.html
+bin/tabgha -o example -l en example-input.html
 # -> build/example-en.xml
 ```
 
@@ -57,6 +55,9 @@ build/                     generated output (gitignored)
 ## Status — what works vs. TODO
 
 **Working** against the reference pair:
+- `<die>` from the pager date just above the title (`May 25, 2026` → `May 25`) and
+  `<gradus>` from the rank named in the title (Solemnity → `solemnitas`, Feast →
+  `festum`, Memorial → `memoria`); each element is omitted when the page has none;
 - an `<elementum>` per reading block, with the correct `@nomen`
   (`lectio` / `psalmus-responsorialis` / `alleluia` / `evangelium`);
 - **OR-split**: a block containing an "OR:" marker becomes several same-`@nomen`
@@ -93,7 +94,6 @@ build/                     generated output (gitignored)
   when the comma-parts are the same word, so multi-word antiphons are left intact.
 
 **TODO** (spec still settling — see comments in the stylesheet):
-- source `<die>` / `<gradus>` (not present in the HTML — supplied via `-d`/`-g`);
 - ODT and PDF front-ends.
 
 There is **no formal schema** for `romanliturgy`; it is defined by examples and
@@ -109,7 +109,7 @@ insignificant whitespace. The hand-curated gold (`example-output.xml`) may there
 two with an exact `diff` — use a whitespace-normalized comparison:
 
 ```sh
-bin/tabgha -o example -l en -d "Monday after Pentecost" -g "Memorial" example-input.html
+bin/tabgha -o example -l en example-input.html
 diff <(tr -s ' \t\n' ' ' < build/example-en.xml) <(tr -s ' \t\n' ' ' < example-output.xml)
 # empty = build and gold are semantically identical
 ```

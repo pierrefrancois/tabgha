@@ -42,8 +42,12 @@ Sources are multiple (web + local) and multilingual.
   conventions as provisional and re-confirm. Key rule learned so far: inside `<referentia>`
   (which lists references and must carry an `elibro` attribute), a single verse is a bare
   `<cap>/<vers>`, while a contiguous range is bracketed `<ab>…</ab>` … `<ad>…</ad>`.
+- **`<die>` / `<gradus>` come from the source, never from the user.** `<die>` = day + month
+  as written near the title, year dropped (`May 25`). `<gradus>` = Latin rank from the title:
+  Solemnity → `solemnitas`, Feast → `festum`, Memorial → `memoria`. Omit the element when
+  the source has no such information (no empty elements).
 - **XSLT namespace note (verified 2026-06-05):** `xmllint --html --xmlout` emits a
   **no-namespace** tree, so the HTML stylesheet matches **bare** element names (`div`, `h3`).
   The namespace gotcha *does* apply to ODT's `content.xml`, which is namespaced — those
   stylesheets must bind prefixes (e.g. `text:p`) or they silently match nothing.
-- **Run the reference transform:** `bin/tabgha -o example -d "Monday after Pentecost" -g "Memorial" example-input.html` → `build/example-en.xml`.
+- **Run the reference transform:** `bin/tabgha -o example example-input.html` → `build/example-en.xml`.

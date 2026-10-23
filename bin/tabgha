@@ -26,8 +26,6 @@ Options:
   -o KEY     Output day-key, e.g. s0531. Output goes to build/<KEY>-<LANG>.xml.
              Default: out.
   -s FILE    XSLT stylesheet (default: <repo>/xslt/usccb-readings.xsl).
-  -d TEXT    Value for <die>   (not derivable from the HTML; optional).
-  -g TEXT    Value for <gradus> (not derivable from the HTML; optional).
   -k         Keep intermediate files (fetched HTML + normalized XHTML).
   -h         Show this help.
 EOF
@@ -36,17 +34,13 @@ EOF
 LANG_CODE=en          # NB: not $LANG, to avoid clobbering the locale variable
 OUT=out
 XSL=""
-DIE=""
-GRADUS=""
 KEEP=0
 
-while getopts ":l:o:s:d:g:kh" opt; do
+while getopts ":l:o:s:kh" opt; do
   case "$opt" in
     l) LANG_CODE=$OPTARG ;;
     o) OUT=$OPTARG ;;
     s) XSL=$OPTARG ;;
-    d) DIE=$OPTARG ;;
-    g) GRADUS=$OPTARG ;;
     k) KEEP=1 ;;
     h) usage; exit 0 ;;
     :) echo "tabgha: option -$OPTARG requires an argument" >&2; exit 2 ;;
@@ -92,8 +86,6 @@ xmllint --html --xmlout --nowarning "$raw" > "$xhtml" 2>/dev/null
 echo "[3/3] transform : xsltproc -> $out_file"
 xsltproc \
   --stringparam lingua "$LANG_CODE" \
-  --stringparam die    "$DIE" \
-  --stringparam gradus "$GRADUS" \
   "$XSL" "$xhtml" > "$out_file"
 
 # validate the result is well-formed
