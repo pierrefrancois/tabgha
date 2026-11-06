@@ -66,7 +66,8 @@ build/                     generated output (gitignored)
   or `optio="?"` + a stderr report when it cannot be derived;
 - `<referentia>` with mandatory `@elibro`, references parsed per the rule
   *single verse = bare `<cap>/<vers>`, contiguous range = `<ab>…</ab> <ad>…</ad>`*
-  (Genesis, Psalm verses, and Gospel match the gold file);
+  (Genesis, Psalm verses, and Gospel match the gold file). A range may cross chapters
+  (`5:10-6:3`), and a bare verse after it stays in the chapter named last;
 - `<thema/>` / `<verbum-domini/>` placement; `<br>` → `<l/>`; `&nbsp;` stripped;
 - **quote detection**: recursive, nesting-aware, per-language `<q>` wrapping
   (`en` = `“ ”` + `‘ ’`; `fr` = `« »`; `de` = `» «` + `„ “`), with edge spaces trimmed

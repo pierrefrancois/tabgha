@@ -297,7 +297,8 @@
 
   <!-- ===== reference list parsing =================================================
        Grammar handled: comma-separated references; ' and ' also separates verses.
-       A reference is either C:V, C:V-V2 (range), or a bare V (chapter carried over).
+       A reference is either C:V, C:V-V2 (range), C:V-C2:V2 (cross-chapter range), or
+       a bare V or V-V2 (chapter carried over from the last one named).
        Single verse  -> bare <cap>/<vers>;  contiguous range -> <ab>..</ab> <ad>..</ad>.
   -->
   <xsl:template name="emit-references">
@@ -307,20 +308,18 @@
     <xsl:if test="$t != ''">
       <xsl:variable name="first" select="normalize-space(substring-before(concat($t, ','), ','))"/>
       <xsl:variable name="rest"  select="substring-after($t, ',')"/>
-      <!-- chapter context updates only when this segment names a chapter (has ':') -->
-      <xsl:variable name="chap">
-        <xsl:choose>
-          <xsl:when test="contains($first, ':')"><xsl:value-of select="normalize-space(substring-before($first, ':'))"/></xsl:when>
-          <xsl:otherwise><xsl:value-of select="$chapter"/></xsl:otherwise>
-        </xsl:choose>
-      </xsl:variable>
       <xsl:call-template name="emit-and-group">
         <xsl:with-param name="group" select="$first"/>
-        <xsl:with-param name="chapter" select="$chap"/>
+        <xsl:with-param name="chapter" select="$chapter"/>
       </xsl:call-template>
       <xsl:call-template name="emit-references">
         <xsl:with-param name="text" select="$rest"/>
-        <xsl:with-param name="chapter" select="$chap"/>
+        <xsl:with-param name="chapter">
+          <xsl:call-template name="end-chapter">
+            <xsl:with-param name="text" select="$first"/>
+            <xsl:with-param name="chapter" select="$chapter"/>
+          </xsl:call-template>
+        </xsl:with-param>
       </xsl:call-template>
     </xsl:if>
   </xsl:template>
@@ -339,7 +338,12 @@
       </xsl:call-template>
       <xsl:call-template name="emit-and-group">
         <xsl:with-param name="group" select="$rest"/>
-        <xsl:with-param name="chapter" select="$chapter"/>
+        <xsl:with-param name="chapter">
+          <xsl:call-template name="end-chapter">
+            <xsl:with-param name="text" select="$first"/>
+            <xsl:with-param name="chapter" select="$chapter"/>
+          </xsl:call-template>
+        </xsl:with-param>
       </xsl:call-template>
     </xsl:if>
   </xsl:template>
@@ -350,29 +354,76 @@
     <xsl:param name="chapter"/>
     <xsl:variable name="it" select="normalize-space($item)"/>
     <xsl:if test="$it != ''">
-      <xsl:variable name="cap">
+      <!-- split on '-' first: either side of a range may name its own chapter -->
+      <xsl:variable name="from" select="normalize-space(substring-before(concat($it, '-'), '-'))"/>
+      <xsl:variable name="to"   select="normalize-space(substring-after($it, '-'))"/>
+      <xsl:variable name="from-cap">
         <xsl:choose>
-          <xsl:when test="contains($it, ':')"><xsl:value-of select="normalize-space(substring-before($it, ':'))"/></xsl:when>
+          <xsl:when test="contains($from, ':')"><xsl:value-of select="normalize-space(substring-before($from, ':'))"/></xsl:when>
           <xsl:otherwise><xsl:value-of select="$chapter"/></xsl:otherwise>
         </xsl:choose>
       </xsl:variable>
-      <xsl:variable name="vpart">
+      <xsl:variable name="from-vers">
         <xsl:choose>
-          <xsl:when test="contains($it, ':')"><xsl:value-of select="normalize-space(substring-after($it, ':'))"/></xsl:when>
-          <xsl:otherwise><xsl:value-of select="$it"/></xsl:otherwise>
+          <xsl:when test="contains($from, ':')"><xsl:value-of select="normalize-space(substring-after($from, ':'))"/></xsl:when>
+          <xsl:otherwise><xsl:value-of select="$from"/></xsl:otherwise>
         </xsl:choose>
       </xsl:variable>
       <xsl:choose>
-        <xsl:when test="contains($vpart, '-')">
-          <!-- TODO: cross-chapter ranges (right side "C:V") not yet handled -->
-          <ab><cap><xsl:value-of select="$cap"/></cap><vers><xsl:value-of select="normalize-space(substring-before($vpart, '-'))"/></vers></ab>
-          <ad><cap><xsl:value-of select="$cap"/></cap><vers><xsl:value-of select="normalize-space(substring-after($vpart, '-'))"/></vers></ad>
+        <xsl:when test="contains($it, '-')">
+          <!-- the end of a range stays in the start's chapter unless it names its own -->
+          <xsl:variable name="to-cap">
+            <xsl:choose>
+              <xsl:when test="contains($to, ':')"><xsl:value-of select="normalize-space(substring-before($to, ':'))"/></xsl:when>
+              <xsl:otherwise><xsl:value-of select="$from-cap"/></xsl:otherwise>
+            </xsl:choose>
+          </xsl:variable>
+          <xsl:variable name="to-vers">
+            <xsl:choose>
+              <xsl:when test="contains($to, ':')"><xsl:value-of select="normalize-space(substring-after($to, ':'))"/></xsl:when>
+              <xsl:otherwise><xsl:value-of select="$to"/></xsl:otherwise>
+            </xsl:choose>
+          </xsl:variable>
+          <ab><cap><xsl:value-of select="$from-cap"/></cap><vers><xsl:value-of select="$from-vers"/></vers></ab>
+          <ad><cap><xsl:value-of select="$to-cap"/></cap><vers><xsl:value-of select="$to-vers"/></vers></ad>
         </xsl:when>
         <xsl:otherwise>
-          <cap><xsl:value-of select="$cap"/></cap><vers><xsl:value-of select="$vpart"/></vers>
+          <cap><xsl:value-of select="$from-cap"/></cap><vers><xsl:value-of select="$from-vers"/></vers>
         </xsl:otherwise>
       </xsl:choose>
     </xsl:if>
+  </xsl:template>
+
+  <!-- the chapter in force after $text: the last one it names (the number just
+       before its last ':'), else the incoming $chapter. "5:10-6:3" -> 6 -->
+  <xsl:template name="end-chapter">
+    <xsl:param name="text"/>
+    <xsl:param name="chapter"/>
+    <xsl:choose>
+      <xsl:when test="contains($text, ':')">
+        <xsl:call-template name="end-chapter">
+          <xsl:with-param name="text" select="substring-after($text, ':')"/>
+          <xsl:with-param name="chapter">
+            <xsl:call-template name="last-word">
+              <xsl:with-param name="s" select="normalize-space(translate(substring-before($text, ':'), '-', ' '))"/>
+            </xsl:call-template>
+          </xsl:with-param>
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:otherwise><xsl:value-of select="$chapter"/></xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <xsl:template name="last-word">
+    <xsl:param name="s"/>
+    <xsl:choose>
+      <xsl:when test="contains($s, ' ')">
+        <xsl:call-template name="last-word">
+          <xsl:with-param name="s" select="substring-after($s, ' ')"/>
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:otherwise><xsl:value-of select="$s"/></xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
 
   <!-- ===== psalm body ============================================================
@@ -389,21 +440,20 @@
     <xsl:if test="$t != ''">
       <xsl:variable name="first" select="normalize-space(substring-before(concat($t, ','), ','))"/>
       <xsl:variable name="rest" select="substring-after($t, ',')"/>
-      <xsl:variable name="chap">
-        <xsl:choose>
-          <xsl:when test="contains($first, ':')"><xsl:value-of select="normalize-space(substring-before($first, ':'))"/></xsl:when>
-          <xsl:otherwise><xsl:value-of select="$chapter"/></xsl:otherwise>
-        </xsl:choose>
-      </xsl:variable>
       <stropha>
         <xsl:call-template name="emit-and-group">
           <xsl:with-param name="group" select="$first"/>
-          <xsl:with-param name="chapter" select="$chap"/>
+          <xsl:with-param name="chapter" select="$chapter"/>
         </xsl:call-template>
       </stropha>
       <xsl:call-template name="emit-strophe-refs">
         <xsl:with-param name="text" select="$rest"/>
-        <xsl:with-param name="chapter" select="$chap"/>
+        <xsl:with-param name="chapter">
+          <xsl:call-template name="end-chapter">
+            <xsl:with-param name="text" select="$first"/>
+            <xsl:with-param name="chapter" select="$chapter"/>
+          </xsl:call-template>
+        </xsl:with-param>
       </xsl:call-template>
     </xsl:if>
   </xsl:template>
