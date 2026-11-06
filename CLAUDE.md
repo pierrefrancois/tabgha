@@ -14,17 +14,19 @@ by hand after copy/paste from a browser. This part automates the source → XML 
 
 ## Status
 
-Early scoping; no code yet. Specifications evolve (no formal schema exists for `romanliturgy`).
-A worked reference pair lives in the repo root: `example-input.html` (a USCCB daily-readings
-page) → `example-output.xml`.
+Working prototype for one source type: USCCB daily-readings HTML, via `bin/tabgha` and
+`xslt/usccb-readings.xsl`. It has only been tested against one real page. See "Status" in
+`README.md` for what works and what is left. Specifications evolve (no formal schema exists for
+`romanliturgy`). A worked reference pair lives in the repo root: `example-input.html` (a USCCB
+daily-readings page) → `example-output.xml`.
 
 ## Architecture (three-stage pipeline, all tools present)
 
 Format-specific front-ends feed a shared normalize → transform backend:
 
-1. **Fetch / extract** — web HTML via `curl`; local `.odt` via `unzip -p file.odt content.xml`
-   (already XML); local `.pdf` via `pdftohtml -xml` or `pdftotext` (structure is heuristic; scanned
-   PDFs would need OCR, not yet set up).
+1. **Fetch / extract** — web HTML via `curl`, or a local HTML file. Planned, not yet written: local
+   `.odt` via `unzip -p file.odt content.xml` (already XML); local `.pdf` via `pdftohtml -xml` or
+   `pdftotext` (structure is heuristic; scanned PDFs would need OCR, not yet set up).
 2. **Normalize** — `xmllint --html --xmlout` repairs HTML5 into well-formed XHTML for XSLT input.
 3. **Transform** — `xsltproc` (XSLT 1.0) applies a stylesheet producing `romanliturgy` XML.
 
@@ -42,6 +44,10 @@ Sources are multiple (web + local) and multilingual.
   conventions as provisional and re-confirm. Key rule learned so far: inside `<referentia>`
   (which lists references and must carry an `elibro` attribute), a single verse is a bare
   `<cap>/<vers>`, while a contiguous range is bracketed `<ab>…</ab>` … `<ad>…</ad>`.
+- **Citation grammar:** operator precedence is `:` / `,` / `and` / `-`, outermost first. `,`
+  separates strophes in psalms, so `3 and 5` is one strophe. `:` can also appear inside a range
+  (`5:10-6:3`) or an `and` item: it sets the current chapter until the next `:`, so the last verse
+  of `5:10-6:3, 5` is 6:5.
 - **`<die>` / `<gradus>` come from the source, never from the user.** `<die>` = day + month
   as written near the title, year dropped (`May 25`). `<gradus>` = Latin rank from the title:
   Solemnity → `solemnitas`, Feast → `festum`, Memorial → `memoria`. Omit the element when

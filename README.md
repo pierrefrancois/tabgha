@@ -94,8 +94,14 @@ build/                     generated output (gitignored)
   A doubled antiphon is collapsed ("Alleluia, alleluia." → `<r>Alleluia.</r>`) only
   when the comma-parts are the same word, so multi-word antiphons are left intact.
 
-**TODO** (spec still settling — see comments in the stylesheet):
-- ODT and PDF front-ends.
+**TODO** (spec still settling):
+- ODT and PDF front-ends;
+- testing on more USCCB pages (only the example page has been run so far);
+- `<gradus>` rank words in other languages (English only), and dates in forms other
+  than "Month DD, YYYY";
+- `@optio` for the Sunday (`a`/`b`/`c`) and weekday (`1`/`2`) cycles;
+- building the XML tree (everything goes into a flat `build/` for now; the day-key
+  scheme and tree layout are still being defined).
 
 There is **no formal schema** for `romanliturgy`; it is defined by examples and
 evolves. Once the rules settle, a RelaxNG schema could validate output via

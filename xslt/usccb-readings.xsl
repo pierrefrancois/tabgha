@@ -13,15 +13,15 @@
   names (div, h3, ...). When we add the ODT front-end, content.xml IS namespaced
   (text:p, ...) and those stylesheets WILL need prefix bindings.
 
-  Status: scaffold. Implemented against the confirmed rules:
+  Implements the confirmed rules, among them:
     - an <elementum> per reading block (div.b-verse). NOTE @nomen is NOT unique:
       alternative versions share @nomen, differ by @optio, and are separated by
-      <vel> (usually empty). A block with an "OR:" marker should therefore yield
-      several same-@nomen elementa + <vel> (TODO at bottom), not one.
+      <vel> (usually empty). A block with an "OR:" marker therefore yields several
+      same-@nomen elementa joined by <vel/>.
     - section name -> @nomen
     - <referentia> with mandatory @elibro, and references parsed per the rule
       "single verse = bare <cap>/<vers>; contiguous range = <ab>..</ab> <ad>..</ad>"
-  Clearly-marked TODOs remain for parts of the spec not yet settled (see bottom).
+  See "Status" in README.md for the full list and what is left to do.
 -->
 <xsl:stylesheet version="1.0"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
@@ -149,7 +149,7 @@
 
     <!-- "OR:" delimiters inside the body split one block into alternative options.
          Each option becomes a full <elementum> (same @nomen, distinct @optio),
-         joined by <vel/>. See memory: elementum-optio-vel. -->
+         joined by <vel/>. -->
     <xsl:variable name="delims"
         select="$body/node()[descendant-or-self::strong[starts-with(normalize-space(.), 'OR')]]"/>
     <xsl:variable name="multi" select="count($delims) &gt; 0"/>
