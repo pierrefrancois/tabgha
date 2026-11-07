@@ -22,7 +22,8 @@ source ──► [1] fetch/extract ──► [2] normalize ──► [3] transfo
 2. **normalize** — `xmllint --html --xmlout` turns messy HTML5 into well-formed XML.
 3. **transform** — `xsltproc` applies an XSLT 1.0 stylesheet.
 
-The result is checked for well-formedness with `xmllint --noout`.
+The result is checked for well-formedness with `xmllint --noout`. A source that yields
+no readings generates no file: `tabgha` skips it silently and exits successfully.
 
 ## Usage
 
@@ -57,7 +58,7 @@ build/                     generated output (gitignored)
 **Working** against the reference pair:
 - `<die>` from the pager date just above the title (`May 25, 2026` → `May 25`) and
   `<gradus>` from the rank named in the title (Solemnity → `solemnitas`, Feast →
-  `festum`, Memorial → `memoria`); each element is omitted when the page has none;
+  `festum`, Memorial → `memoria`; none for an Optional Memorial); each element is omitted when the page has none;
 - an `<elementum>` per reading block, with the correct `@nomen`
   (`lectio` / `psalmus-responsorialis` / `alleluia` / `evangelium`);
 - **OR-split**: a block containing an "OR:" marker becomes several same-`@nomen`

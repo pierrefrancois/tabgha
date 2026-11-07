@@ -36,7 +36,10 @@ Sources are multiple (web + local) and multilingual.
 
 - **Output filenames:** `‹day-key›-‹lang›.xml`, e.g. `s0531-en.xml` (`s0531` = May 31;
   `to271` = Sunday of the 27th week of Ordinary Time). The `‹lang›` suffix matches the root
-  `lingua` attribute. One file per language per day. (Day-key prefix scheme still being defined.)
+  `lingua` attribute. One file per language per celebration: when two celebrations share a day,
+  the day-key takes one extra letter or symbol (Christmas Night and Day: `s1225n`, `s1225d`). A vigil Mass is filed under the eve's date with
+  `+`: the vigil of Saints Peter and Paul (June 29, `s0629-en.xml`) is `s0628+-en.xml`.
+  (Day-key prefix scheme still being defined.)
 - **Tree layout:** mirrors the liturgical books, with subsections like `ordo-missae` and
   `lectionarium`. Provisional — expected to be reshaped.
 - **`romanliturgy` schema is implicit and evolving** — defined by examples and incremental
@@ -48,10 +51,23 @@ Sources are multiple (web + local) and multilingual.
   separates strophes in psalms, so `3 and 5` is one strophe. `:` can also appear inside a range
   (`5:10-6:3`) or an `and` item: it sets the current chapter until the next `:`, so the last verse
   of `5:10-6:3, 5` is 6:5.
-- **`<die>` / `<gradus>` come from the source, never from the user.** `<die>` = day + month
-  as written near the title, year dropped (`May 25`). `<gradus>` = Latin rank from the title:
-  Solemnity → `solemnitas`, Feast → `festum`, Memorial → `memoria`. Omit the element when
-  the source has no such information (no empty elements).
+- **`<die>` / `<gradus>` come from the source, never from the user, and are included whenever
+  possible.** `<die>` is either a date, day + month as written near the title with the year
+  dropped (`May 25`), or a day of the liturgical calendar (`Monday in the 6th week of Ordinary
+  Time`; `Saturday after the Second Sunday after Pentecost` for the Memorial of the Immaculate
+  Heart of Mary). Which form applies when is not settled yet. `<gradus>` = Latin rank from the title:
+  Solemnity → `solemnitas`, Feast → `festum`, Memorial → `memoria`; an Optional Memorial
+  gets no `<gradus>`. Omit the element when the source has no such information (no empty
+  elements).
+- **Easter Vigil** (`tp10-en.xml`): each of the 6 or 7 readings is `<elementum nomen="lectio" optio="n">`, where `n`
+  is its sequential number (here `@optio` numbers the reading instead of marking an alternative).
+  Then come `<elementum nomen="epistula">`, `<elementum nomen="alleluia">` and
+  `<elementum nomen="evangelium">`. USCCB labels the alleluia block "Responsorial Psalm"
+  (Psalm 118), so the block after the epistle is mapped to `alleluia` by position. Psalms are
+  numbered the same way; when there are several options after one reading, a letter is added:
+  `optio="1a"`, `optio="1b"`.
+- **"or" blocks:** a source block introduced by "or" ("Or", "Or:") takes the same `@nomen` as the
+  block before it. It is an alternative to that block, so the two are joined by `<vel/>`.
 - **XSLT namespace note (verified 2026-06-05):** `xmllint --html --xmlout` emits a
   **no-namespace** tree, so the HTML stylesheet matches **bare** element names (`div`, `h3`).
   The namespace gotcha *does* apply to ODT's `content.xml`, which is namespaced — those

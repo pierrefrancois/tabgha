@@ -90,5 +90,12 @@ xsltproc \
 
 # validate the result is well-formed
 xmllint --noout "$out_file"
+
+# a source with no readings generates no page: skip it silently, without error
+if ! grep -q '<elementum' "$out_file"; then
+  rm -f "$out_file"
+  exit 0
+fi
+
 echo "OK: wrote $out_file ($(wc -l < "$out_file") lines), well-formed."
 [ "$KEEP" -eq 1 ] && echo "kept intermediates in $work" || true

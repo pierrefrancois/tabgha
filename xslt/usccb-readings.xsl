@@ -52,7 +52,7 @@
 
   <!-- <gradus>: rank named in the celebration title (<h2> of div.b-lectionary).
        Solemnity -> solemnitas, Feast -> festum, Memorial -> memoria; otherwise
-       (e.g. a plain weekday) no <gradus> element. -->
+       (e.g. a plain weekday, or an Optional Memorial) no <gradus> element. -->
   <xsl:variable name="title-lc"
       select="translate(normalize-space((//div[contains(concat(' ', normalize-space(@class), ' '), ' b-lectionary ')]//h2)[1]),
                         'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')"/>
@@ -60,6 +60,7 @@
     <xsl:choose>
       <xsl:when test="contains($title-lc, 'solemnity')">solemnitas</xsl:when>
       <xsl:when test="contains($title-lc, 'feast')">festum</xsl:when>
+      <xsl:when test="contains($title-lc, 'optional memorial')"/>
       <xsl:when test="contains($title-lc, 'memorial')">memoria</xsl:when>
     </xsl:choose>
   </xsl:variable>
