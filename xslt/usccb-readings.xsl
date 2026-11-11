@@ -48,6 +48,7 @@
     <day match="immaculate heart">Saturday after the Second Sunday after Pentecost</day>
     <day match="sacred heart">Friday after the Second Sunday after Pentecost</day>
     <day match="mother of the church">Monday after Pentecost</day>
+    <day match="easter vigil">The Easter Vigil in the Holy Night</day>
   </xsl:variable>
   <xsl:variable name="movable" select="exsl:node-set($movable-rtf)/day[contains($title-lc, @match)][1]"/>
 
@@ -138,12 +139,38 @@
   <!-- A reading block: <div class="... b-verse ..."> -->
   <xsl:variable name="verse-blocks"
       select="//div[contains(concat(' ', normalize-space(@class), ' '), ' b-verse ')]
-               [not(starts-with(normalize-space(.//h3[contains(concat(' ', normalize-space(@class), ' '), ' name ')]), 'At the Procession'))]"/>
+               [not(starts-with(normalize-space(.//h3[contains(concat(' ', normalize-space(@class), ' '), ' name ')]), 'At the Procession'))]
+               [normalize-space(translate(.//h3[contains(concat(' ', normalize-space(@class), ' '), ' name ')], '&#xA0;', ' ')) != '']"/>
+  <!-- a section with an empty heading is not a reading: on Good Friday it is
+       USCCB's note on the Passion ("The passion narratives are proclaimed in full..."),
+       which is not in the Lectionary -->
   <!-- the "Reading ..." blocks before the Gospel ("At the Mass - Reading I" on Palm
        Sunday); "or" blocks are not counted -->
   <xsl:variable name="reading-blocks"
       select="$verse-blocks[starts-with(normalize-space(translate(.//h3[contains(concat(' ', normalize-space(@class), ' '), ' name ')], '&#xA0;', ' ')), 'Reading')
                             or starts-with(normalize-space(translate(.//h3[contains(concat(' ', normalize-space(@class), ' '), ' name ')], '&#xA0;', ' ')), 'At the Mass - Reading')]"/>
+  <!-- Easter Vigil: readings and psalms are numbered in @optio; the block after the
+       Epistle (labelled "Responsorial Psalm", Psalm 118) is the alleluia -->
+  <xsl:variable name="is-vigil" select="contains($title-lc, 'easter vigil')"/>
+  <!-- Palm Sunday and Good Friday: the Gospel is the Passion (passio-domini) -->
+  <xsl:variable name="is-passion-day" select="contains($title-lc, 'palm sunday') or contains($title-lc, 'good friday')"/>
+  <!-- Palm Sunday: every element carries the year of the cycle, known from the
+       Passion's Gospel (Matthew a, Mark b, Luke c) -->
+  <xsl:variable name="is-palm-sunday" select="contains($title-lc, 'palm sunday')"/>
+  <xsl:variable name="passion-address">
+    <xsl:apply-templates select="$verse-blocks[normalize-space(translate(.//h3[contains(concat(' ', normalize-space(@class), ' '), ' name ')], '&#xA0;', ' ')) = 'Gospel'][1]" mode="block-address"/>
+  </xsl:variable>
+  <xsl:variable name="passion-book"
+      select="string($books[starts-with(concat($passion-address, ' '), concat(@name, ' '))][1]/@code)"/>
+  <xsl:variable name="palm-year">
+    <xsl:choose>
+      <xsl:when test="$passion-book = 'Mt'">a</xsl:when>
+      <xsl:when test="$passion-book = 'Mc'">b</xsl:when>
+      <xsl:when test="$passion-book = 'Lc'">c</xsl:when>
+      <xsl:otherwise>?</xsl:otherwise>
+    </xsl:choose>
+  </xsl:variable>
+  <xsl:variable name="epistle-block" select="$verse-blocks[starts-with(normalize-space(translate(.//h3[contains(concat(' ', normalize-space(@class), ' '), ' name ')], '&#xA0;', ' ')), 'Epistle')][1]"/>
   <!-- Palm Sunday: the Gospel "At the Procession with Palms" is not part of the
        Lectionary (it belongs to the Missal), so that block is left out -->
 
@@ -196,8 +223,14 @@
     <!-- two readings before the Gospel (Sundays, solemnities): lectio-prima and
          lectio-secunda; a single reading, or more than two (Easter Vigil), stays lectio -->
     <xsl:variable name="reading-block" select="(self::node()[not($is-or)] | $main[$is-or])[1]"/>
+    <xsl:variable name="preceding-blocks" select="preceding::div[contains(concat(' ', normalize-space(@class), ' '), ' b-verse ')]"/>
+    <xsl:variable name="after-epistle"
+        select="$is-vigil and $epistle-block and count($preceding-blocks | $epistle-block) = count($preceding-blocks)"/>
     <xsl:variable name="nomen">
       <xsl:choose>
+        <xsl:when test="$after-epistle and $base-nomen = 'psalmus-responsorialis'">alleluia</xsl:when>
+        <!-- the Passion, read as the Gospel on Palm Sunday and Good Friday -->
+        <xsl:when test="$base-nomen = 'evangelium' and $is-passion-day">passio-domini</xsl:when>
         <xsl:when test="$base-nomen = 'lectio' and count($reading-blocks) = 2">
           <xsl:choose>
             <xsl:when test="generate-id($reading-block) = generate-id($reading-blocks[1])">lectio-prima</xsl:when>
@@ -207,7 +240,7 @@
         <xsl:otherwise><xsl:value-of select="$base-nomen"/></xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
-    <xsl:variable name="is-reading" select="starts-with($nomen, 'lectio') or $nomen = 'epistula' or $nomen = 'evangelium'"/>
+    <xsl:variable name="is-reading" select="starts-with($nomen, 'lectio') or $nomen = 'epistula' or $nomen = 'evangelium' or $nomen = 'passio-domini'"/>
 
     <!-- @optio of a block that has "or" alternatives, or is one (empty otherwise):
          a shorter form of the same reading -> longior / brevior; a different passage ->
@@ -235,6 +268,32 @@
       </xsl:choose>
     </xsl:variable>
 
+    <!-- Easter Vigil: a reading or psalm before the Epistle gets the number of its
+         reading (a psalm: of the reading before it); alternatives add a letter: 1a, 1b -->
+    <xsl:variable name="vigil-optio">
+      <xsl:if test="$is-vigil and not($after-epistle) and ($nomen = 'lectio' or $nomen = 'psalmus-responsorialis')">
+        <xsl:variable name="anchor" select="$reading-block | self::node()[not($reading-block)]"/>
+        <xsl:variable name="upto" select="$anchor/preceding::div[contains(concat(' ', normalize-space(@class), ' '), ' b-verse ')] | $anchor"/>
+        <xsl:value-of select="count($reading-blocks[count(. | $upto) = count($upto)])"/>
+        <xsl:choose>
+          <xsl:when test="$is-or and $main">
+            <xsl:value-of select="substring('abcdefghij',
+                1 + count(preceding::div[contains(concat(' ', normalize-space(@class), ' '), ' b-verse ')]) - count($main/preceding::div[contains(concat(' ', normalize-space(@class), ' '), ' b-verse ')]), 1)"/>
+          </xsl:when>
+          <xsl:when test="$next-is-or">a</xsl:when>
+        </xsl:choose>
+      </xsl:if>
+    </xsl:variable>
+
+    <!-- Palm Sunday: every element carries the year (a, b, c); an alternative adds
+         its kind, as in the stored hs1-en.xml: "a-brevior" (a longer form stays "a") -->
+    <xsl:variable name="passion-optio">
+      <xsl:if test="$is-palm-sunday">
+        <xsl:value-of select="$palm-year"/>
+        <xsl:if test="string($optio) and $optio != 'longior'">-<xsl:value-of select="$optio"/></xsl:if>
+      </xsl:if>
+    </xsl:variable>
+
     <xsl:if test="$is-or and $main"><vel/></xsl:if>
 
     <!-- "OR:" delimiters inside the body split one block into alternative options.
@@ -253,7 +312,13 @@
       <xsl:with-param name="multi" select="$multi"/>
       <xsl:with-param name="header-address" select="$header-address"/>
       <xsl:with-param name="header-confer" select="string($header-confer)"/>
-      <xsl:with-param name="optio" select="string($optio)"/>
+      <xsl:with-param name="optio">
+        <xsl:choose>
+          <xsl:when test="string($vigil-optio)"><xsl:value-of select="$vigil-optio"/></xsl:when>
+          <xsl:when test="string($passion-optio)"><xsl:value-of select="$passion-optio"/></xsl:when>
+          <xsl:otherwise><xsl:value-of select="$optio"/></xsl:otherwise>
+        </xsl:choose>
+      </xsl:with-param>
     </xsl:call-template>
 
     <!-- each further option follows a delimiter, introduced by <vel/> -->

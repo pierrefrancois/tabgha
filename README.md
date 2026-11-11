@@ -61,13 +61,20 @@ build/                     generated output (gitignored)
   (`July 25, 2026` → `July 25`); the liturgical day for a movable one, in the website's
   wording when its title names the day (`Monday of the Fourteenth Week in Ordinary
   Time`), else from a small table following the liturgical books (Mary, Mother of the
-  Church → `Monday after Pentecost`); and
+  Church → `Monday after Pentecost`; Easter Vigil → `The Easter Vigil in the Holy Night`); and
   `<gradus>` from the rank named in the title (Solemnity → `solemnitas`, Feast →
   `festum`, Memorial → `memoria`; none for an Optional Memorial); each element is omitted when the page has none;
 - an `<elementum>` per reading block, with the correct `@nomen`
   (`lectio`, or `lectio-prima` / `lectio-secunda` when there are two readings before the
   Gospel / `epistula` ("Epistle", Easter Vigil)
   / `psalmus-responsorialis` / `alleluia` / `versus-ante-evangelium` (Lent: "Verse Before the Gospel", a plain `<para>`) / `evangelium`);
+- **Easter Vigil**: readings and psalms numbered in `@optio` (`1`…`7`, a psalm taking the number
+  of the reading before it), alternatives lettered (`1a`, `1b`, `7c`); then `epistula`, the
+  following "Responsorial Psalm" (Psalm 118) as `alleluia`, and `evangelium`;
+- a page section with an empty heading is skipped (Good Friday: USCCB's note on the Passion);
+- **Passion**: the Gospel of Palm Sunday and Good Friday is `passio-domini`; on Palm Sunday
+  every element gets `optio="a"`/`"b"`/`"c"` from the Passion's book (Matthew/Mark/Luke), the
+  Passion's shorter form `"a-brevior"`;
 - **Palm Sunday**: the "At the Procession with Palms" Gospel is skipped (Missal, not
   Lectionary) and "At the Mass - " is dropped from the first reading's name;
 - **"or" blocks**: a block named "or" / "Or" / "Or:" takes the `@nomen` of the block

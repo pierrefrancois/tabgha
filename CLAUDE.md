@@ -69,7 +69,9 @@ Sources are multiple (web + local) and multilingual.
   `<elementum nomen="evangelium">`. USCCB labels the alleluia block "Responsorial Psalm"
   (Psalm 118), so the block after the epistle is mapped to `alleluia` by position. Psalms are
   numbered the same way; when there are several options after one reading, a letter is added:
-  `optio="1a"`, `optio="1b"`.
+  `optio="1a"`, `optio="1b"`. The stylesheet also letters a reading's longer/shorter forms
+  (`lectio optio="1a"` / `"1b"`) there, instead of `longior`/`brevior`. The Vigil is recognised by
+  "Easter Vigil" in the page title.
 - **"or" blocks:** a source block introduced by "or" ("Or", "Or:") takes the same `@nomen` as the
   block before it. It is an alternative to that block, so the two are joined by `<vel/>`. When
   no other option applies (like Sunday years `a`/`b`/`c`), a longer and a shorter form of the
@@ -82,6 +84,12 @@ Sources are multiple (web + local) and multilingual.
   included, and other solemnities) has `nomen="lectio-prima"` and `nomen="lectio-secunda"`; `lectio`
   is kept for days with a single reading and for exceptional celebrations like the Easter Vigil.
   The stylesheet counts the "Reading" blocks, "or" blocks excluded: exactly two → prima/secunda.
+- **Sections with an empty heading are skipped:** they are not readings (Good Friday: USCCB's note
+  on the Passion, which is not in the Lectionary).
+- **The Passion** (the Gospel of Palm Sunday and Good Friday) is `nomen="passio-domini"`. On Palm
+  Sunday every element carries the year: `optio="a"`, `"b"` or `"c"` (from the Passion's Gospel:
+  Matthew, Mark, Luke), and the Passion's shorter form `optio="a-brevior"`, following the stored
+  `hs1-en.xml`.
 - **Palm Sunday:** the block "At the Procession with Palms - Gospel" is skipped (it belongs to the
   Missal, not the Lectionary; it will be added there later), and "At the Mass - " is dropped from
   the first reading's name.
