@@ -26,6 +26,8 @@ Options:
   -o KEY     Output day-key, e.g. s0531. Output goes to build/<KEY>-<LANG>.xml.
              Default: out.
   -s FILE    XSLT stylesheet (default: <repo>/xslt/usccb-readings.xsl).
+  -b FILE    Book table, the liturgy project's i10n.xml (default: $TABGHA_I10N,
+             else ~/Documents/Liturgie/xml/xsl/i10n.xml).
   -k         Keep intermediate files (fetched HTML + normalized XHTML).
   -h         Show this help.
 EOF
@@ -34,13 +36,15 @@ EOF
 LANG_CODE=en          # NB: not $LANG, to avoid clobbering the locale variable
 OUT=out
 XSL=""
+I10N=${TABGHA_I10N:-$HOME/Documents/Liturgie/xml/xsl/i10n.xml}
 KEEP=0
 
-while getopts ":l:o:s:kh" opt; do
+while getopts ":l:o:s:b:kh" opt; do
   case "$opt" in
     l) LANG_CODE=$OPTARG ;;
     o) OUT=$OPTARG ;;
     s) XSL=$OPTARG ;;
+    b) I10N=$OPTARG ;;
     k) KEEP=1 ;;
     h) usage; exit 0 ;;
     :) echo "tabgha: option -$OPTARG requires an argument" >&2; exit 2 ;;
@@ -56,6 +60,12 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 : "${XSL:=$ROOT/xslt/usccb-readings.xsl}"
 BUILD=$ROOT/build
 mkdir -p "$BUILD"
+if [ -f "$I10N" ]; then
+  I10N=$(cd "$(dirname "$I10N")" && pwd)/$(basename "$I10N")
+else
+  echo "tabgha: book table not found: $I10N; only the Psalms will be recognised" >&2
+  I10N=""
+fi
 
 work=$(mktemp -d)
 cleanup() { [ "$KEEP" -eq 1 ] || rm -rf "$work"; }
@@ -84,8 +94,11 @@ xmllint --html --xmlout --nowarning "$raw" > "$xhtml" 2>/dev/null
 
 # 3) transform -> romanliturgy XML
 echo "[3/3] transform : xsltproc -> $out_file"
-xsltproc \
+# --novalid --nonet: do not load the book table's external DTD from the network
+# (the entities it uses are declared inline in i10n.xml)
+xsltproc --novalid --nonet \
   --stringparam lingua "$LANG_CODE" \
+  --stringparam i10n "$I10N" \
   "$XSL" "$xhtml" > "$out_file"
 
 # validate the result is well-formed

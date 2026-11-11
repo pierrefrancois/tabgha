@@ -36,13 +36,39 @@
   <!-- Record language; supplied by the driver (-l). -->
   <xsl:param name="lingua" select="'en'"/>
 
-  <!-- <die>: the current date in the pager just above the title,
-       <li class="current"><time>May 25, 2026</time></li> -> "May 25" (year dropped).
-       Empty (=> no <die> element) when the page has no such date. -->
+  <!-- celebration title (<h2> of div.b-lectionary), as written and lower-cased -->
+  <xsl:variable name="title"
+      select="normalize-space((//div[contains(concat(' ', normalize-space(@class), ' '), ' b-lectionary ')]//h2)[1])"/>
+  <xsl:variable name="title-lc"
+      select="translate($title, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')"/>
+
+  <!-- Movable celebrations whose day the website does not give: the day as the
+       official liturgical books name it. Matched on the lower-cased title. -->
+  <xsl:variable name="movable-rtf">
+    <day match="immaculate heart">Saturday after the Second Sunday after Pentecost</day>
+    <day match="sacred heart">Friday after the Second Sunday after Pentecost</day>
+    <day match="mother of the church">Monday after Pentecost</day>
+  </xsl:variable>
+  <xsl:variable name="movable" select="exsl:node-set($movable-rtf)/day[contains($title-lc, @match)][1]"/>
+
+  <!-- <die>: a fixed-date celebration takes the date, a movable one the day of the
+       liturgical calendar:
+       1. a movable celebration from the table above -> the liturgical books' wording;
+       2. a title that is itself a liturgical day (a weekday or Sunday of a season,
+          a day of Holy Week) -> the title, as the website words it;
+       3. otherwise the date in the pager just above the title,
+          <li class="current"><time>May 25, 2026</time></li> -> "May 25" (year dropped).
+       Empty (=> no <die> element) when none applies. -->
   <xsl:variable name="date-text"
       select="normalize-space((//li[contains(concat(' ', normalize-space(@class), ' '), ' current ')]/time)[1])"/>
   <xsl:variable name="die">
     <xsl:choose>
+      <xsl:when test="$movable"><xsl:value-of select="$movable"/></xsl:when>
+      <xsl:when test="contains($title-lc, ' week ') or contains($title-lc, 'sunday')
+                      or contains($title-lc, 'ash wednesday') or contains($title-lc, 'holy thursday')
+                      or contains($title-lc, 'good friday') or contains($title-lc, 'holy saturday')">
+        <xsl:value-of select="$title"/>
+      </xsl:when>
       <xsl:when test="contains($date-text, ',')">
         <xsl:value-of select="normalize-space(substring-before($date-text, ','))"/>
       </xsl:when>
@@ -53,9 +79,6 @@
   <!-- <gradus>: rank named in the celebration title (<h2> of div.b-lectionary).
        Solemnity -> solemnitas, Feast -> festum, Memorial -> memoria; otherwise
        (e.g. a plain weekday, or an Optional Memorial) no <gradus> element. -->
-  <xsl:variable name="title-lc"
-      select="translate(normalize-space((//div[contains(concat(' ', normalize-space(@class), ' '), ' b-lectionary ')]//h2)[1]),
-                        'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')"/>
   <xsl:variable name="gradus">
     <xsl:choose>
       <xsl:when test="contains($title-lc, 'solemnity')">solemnitas</xsl:when>
@@ -65,23 +88,19 @@
     </xsl:choose>
   </xsl:variable>
 
-  <!-- Book name -> elibro code lookup (extend as new sources appear). -->
+  <!-- Book name -> elibro code lookup, read from the liturgy project's book table
+       (xsl/i10n.xml): <liber elibro="Lc"><versio lingua="en" siglum="Luke">.
+       The siglum is the book's short name as the source writes it. The Psalms have
+       no <liber> there, so they are added here. Path supplied by the driver (-b). -->
+  <xsl:param name="i10n" select="''"/>
   <xsl:variable name="books-rtf">
-    <book name="Genesis" code="Gen"/>
-    <book name="Exodus" code="Ex"/>
-    <book name="Leviticus" code="Lev"/>
-    <book name="Numbers" code="Num"/>
-    <book name="Deuteronomy" code="Deut"/>
+    <xsl:if test="string($i10n)">
+      <xsl:for-each select="document($i10n)/i10n/liber/versio[@lingua = $lingua][@siglum != '']">
+        <book name="{@siglum}" code="{../@elibro}"/>
+      </xsl:for-each>
+    </xsl:if>
     <book name="Psalms" code="Ps"/>
     <book name="Psalm" code="Ps"/>
-    <book name="Isaiah" code="Is"/>
-    <book name="Jeremiah" code="Ier"/>
-    <book name="Acts" code="Act"/>
-    <book name="Romans" code="Rom"/>
-    <book name="Matthew" code="Mt"/>
-    <book name="Mark" code="Mc"/>
-    <book name="Luke" code="Lc"/>
-    <book name="John" code="Io"/>
   </xsl:variable>
   <xsl:variable name="books" select="exsl:node-set($books-rtf)/book"/>
 
@@ -95,8 +114,7 @@
   <xsl:variable name="LC" select="'abcdefghijklmnopqrstuvwxyz'"/>
 
   <!-- Active quote pairs PER LANGUAGE. Every pair has distinct open/close chars, so
-       nesting/mixing is handled by depth-matching. NB en deliberately omits the
-       single pair (U+2018/U+2019) because U+2019 doubles as the apostrophe. -->
+       nesting/mixing is handled by depth-matching. -->
   <xsl:variable name="quotes-rtf">
     <lang code="en">
       <pair open="&#x201C;" close="&#x201D;"/>
@@ -130,23 +148,72 @@
   </xsl:template>
 
   <xsl:template match="div" mode="reading">
-    <xsl:variable name="name"
-        select="normalize-space(.//h3[contains(concat(' ', normalize-space(@class), ' '), ' name ')])"/>
-    <xsl:variable name="header-address"
-        select="normalize-space(.//div[contains(concat(' ', normalize-space(@class), ' '), ' address ')]//a)"/>
+    <xsl:variable name="name">
+      <xsl:apply-templates select="." mode="block-name"/>
+    </xsl:variable>
+    <xsl:variable name="header-address">
+      <xsl:apply-templates select="." mode="block-address"/>
+    </xsl:variable>
+    <xsl:variable name="header-confer">
+      <xsl:call-template name="has-see">
+        <xsl:with-param name="raw" select=".//div[contains(concat(' ', normalize-space(@class), ' '), ' address ')]//a"/>
+      </xsl:call-template>
+    </xsl:variable>
     <xsl:variable name="body"
         select=".//div[contains(concat(' ', normalize-space(@class), ' '), ' content-body ')]/p"/>
 
+    <!-- An "or" block (name "or", "Or", "Or:") is an alternative to the block before
+         it: same @nomen, joined to it by <vel/>. -->
+    <xsl:variable name="is-or" select="translate(translate($name, ':', ''), 'OR', 'or') = 'or'"/>
+    <xsl:variable name="main"
+        select="preceding::div[contains(concat(' ', normalize-space(@class), ' '), ' b-verse ')]
+                  [not(translate(normalize-space(translate(.//h3[contains(concat(' ', normalize-space(@class), ' '), ' name ')], '&#xA0;', ' ')), 'OR:', 'or') = 'or')][1]"/>
+    <xsl:variable name="next"
+        select="following::div[contains(concat(' ', normalize-space(@class), ' '), ' b-verse ')][1]"/>
+    <xsl:variable name="next-name">
+      <xsl:apply-templates select="$next" mode="block-name"/>
+    </xsl:variable>
+    <xsl:variable name="next-is-or" select="translate(translate($next-name, ':', ''), 'OR', 'or') = 'or'"/>
+
     <xsl:variable name="nomen">
-      <xsl:choose>
-        <xsl:when test="starts-with($name, 'Reading')">lectio</xsl:when>
-        <xsl:when test="contains($name, 'Psalm')">psalmus-responsorialis</xsl:when>
-        <xsl:when test="contains($name, 'Alleluia') or contains($name, 'Acclamation')">alleluia</xsl:when>
-        <xsl:when test="contains($name, 'Gospel')">evangelium</xsl:when>
-        <xsl:otherwise>ignotum</xsl:otherwise>
-      </xsl:choose>
+      <xsl:call-template name="nomen-of">
+        <xsl:with-param name="name">
+          <xsl:choose>
+            <xsl:when test="$is-or and $main"><xsl:apply-templates select="$main" mode="block-name"/></xsl:when>
+            <xsl:otherwise><xsl:value-of select="$name"/></xsl:otherwise>
+          </xsl:choose>
+        </xsl:with-param>
+      </xsl:call-template>
     </xsl:variable>
     <xsl:variable name="is-reading" select="$nomen = 'lectio' or $nomen = 'evangelium'"/>
+
+    <!-- @optio of a block that has "or" alternatives, or is one (empty otherwise):
+         a shorter form of the same reading -> longior / brevior; a different passage ->
+         the book code; undecidable -> "?" (reported). -->
+    <xsl:variable name="optio">
+      <xsl:choose>
+        <xsl:when test="$is-or and $main">
+          <xsl:call-template name="alternative-kind">
+            <xsl:with-param name="main-address"><xsl:apply-templates select="$main" mode="block-address"/></xsl:with-param>
+            <xsl:with-param name="alt-address" select="$header-address"/>
+            <xsl:with-param name="role" select="'alt'"/>
+            <!-- 2 for the first "or" block after the main one, 3 for the next... -->
+            <xsl:with-param name="alt-number"
+                select="1 + count(preceding::div[contains(concat(' ', normalize-space(@class), ' '), ' b-verse ')])
+                          - count($main/preceding::div[contains(concat(' ', normalize-space(@class), ' '), ' b-verse ')])"/>
+          </xsl:call-template>
+        </xsl:when>
+        <xsl:when test="$next-is-or">
+          <xsl:call-template name="alternative-kind">
+            <xsl:with-param name="main-address" select="$header-address"/>
+            <xsl:with-param name="alt-address"><xsl:apply-templates select="$next" mode="block-address"/></xsl:with-param>
+            <xsl:with-param name="role" select="'main'"/>
+          </xsl:call-template>
+        </xsl:when>
+      </xsl:choose>
+    </xsl:variable>
+
+    <xsl:if test="$is-or and $main"><vel/></xsl:if>
 
     <!-- "OR:" delimiters inside the body split one block into alternative options.
          Each option becomes a full <elementum> (same @nomen, distinct @optio),
@@ -163,6 +230,8 @@
       <xsl:with-param name="is-reading" select="$is-reading"/>
       <xsl:with-param name="multi" select="$multi"/>
       <xsl:with-param name="header-address" select="$header-address"/>
+      <xsl:with-param name="header-confer" select="string($header-confer)"/>
+      <xsl:with-param name="optio" select="string($optio)"/>
     </xsl:call-template>
 
     <!-- each further option follows a delimiter, introduced by <vel/> -->
@@ -179,6 +248,121 @@
     </xsl:for-each>
   </xsl:template>
 
+  <!-- a block's name (h3.name) and reference (div.address a), normalized
+       (a non-breaking space, as in "Or&#xA0;", counts as a space) -->
+  <xsl:template match="div" mode="block-name">
+    <xsl:value-of select="normalize-space(translate(.//h3[contains(concat(' ', normalize-space(@class), ' '), ' name ')], '&#xA0;', ' '))"/>
+  </xsl:template>
+  <xsl:template match="div" mode="block-address">
+    <xsl:call-template name="strip-see">
+      <xsl:with-param name="raw" select="normalize-space(.//div[contains(concat(' ', normalize-space(@class), ' '), ' address ')]//a)"/>
+    </xsl:call-template>
+  </xsl:template>
+
+  <!-- '1' when the reference is introduced by "See" (written <confer/> in <referentia>) -->
+  <xsl:template name="has-see">
+    <xsl:param name="raw"/>
+    <xsl:if test="starts-with(normalize-space(translate($raw, '&#xA0;', ' ')), 'See ')">1</xsl:if>
+  </xsl:template>
+
+  <!-- every reference text passes through here: a non-breaking space counts as a
+       space, a final full stop is dropped, and "See 2 Timothy 1:10" -> "2 Timothy 1:10" (the
+       "See" itself becomes <confer/>, see has-see) -->
+  <xsl:template name="strip-see">
+    <xsl:param name="raw"/>
+    <xsl:variable name="n" select="normalize-space(translate($raw, '&#xA0;', ' '))"/>
+    <!-- a full stop ending the reference ("Luke 2:1-14.") is punctuation, not part of the verse -->
+    <xsl:variable name="s">
+      <xsl:choose>
+        <xsl:when test="substring($n, string-length($n)) = '.'"><xsl:value-of select="normalize-space(substring($n, 1, string-length($n) - 1))"/></xsl:when>
+        <xsl:otherwise><xsl:value-of select="$n"/></xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+    <xsl:choose>
+      <xsl:when test="starts-with($s, 'See ')"><xsl:value-of select="substring-after($s, 'See ')"/></xsl:when>
+      <xsl:otherwise><xsl:value-of select="$s"/></xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <!-- section name -> @nomen -->
+  <xsl:template name="nomen-of">
+    <xsl:param name="name"/>
+    <xsl:choose>
+      <xsl:when test="starts-with($name, 'Reading')">lectio</xsl:when>
+      <xsl:when test="contains($name, 'Psalm')">psalmus-responsorialis</xsl:when>
+      <xsl:when test="contains($name, 'Alleluia') or contains($name, 'Acclamation')">alleluia</xsl:when>
+      <xsl:when test="contains($name, 'Verse Before the Gospel')">versus-ante-evangelium</xsl:when>
+      <xsl:when test="contains($name, 'Gospel')">evangelium</xsl:when>
+      <xsl:otherwise>ignotum</xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <!-- @optio for a main block ($role='main') or its "or" alternative ($role='alt').
+       Same book, and the alternative starts inside the main reading's range ->
+       a shorter form: longior (main) / brevior (alt). Different books -> each one's
+       book code. Different passages of the same book -> numbered: 1 (main), 2, 3...
+       (alt, by position). A book that is not recognised -> "?" (reported by emit-option). -->
+  <xsl:template name="alternative-kind">
+    <xsl:param name="main-address"/>
+    <xsl:param name="alt-address"/>
+    <xsl:param name="role"/>
+    <xsl:param name="alt-number" select="2"/>
+    <xsl:variable name="mbk" select="$books[starts-with(concat($main-address, ' '), concat(@name, ' '))][1]"/>
+    <xsl:variable name="abk" select="$books[starts-with(concat($alt-address, ' '), concat(@name, ' '))][1]"/>
+    <xsl:variable name="mnum" select="normalize-space(substring-after($main-address, $mbk/@name))"/>
+    <xsl:variable name="anum" select="normalize-space(substring-after($alt-address, $abk/@name))"/>
+    <xsl:variable name="m-start"><xsl:call-template name="start-key"><xsl:with-param name="ref" select="$mnum"/></xsl:call-template></xsl:variable>
+    <xsl:variable name="a-start"><xsl:call-template name="start-key"><xsl:with-param name="ref" select="$anum"/></xsl:call-template></xsl:variable>
+    <xsl:variable name="m-end"><xsl:call-template name="end-key"><xsl:with-param name="ref" select="$mnum"/></xsl:call-template></xsl:variable>
+    <xsl:choose>
+      <xsl:when test="$mbk and $abk and $mbk/@code = $abk/@code
+                      and number($a-start) &gt;= number($m-start) and number($a-start) &lt;= number($m-end)">
+        <xsl:choose>
+          <xsl:when test="$role = 'main'">longior</xsl:when>
+          <xsl:otherwise>brevior</xsl:otherwise>
+        </xsl:choose>
+      </xsl:when>
+      <xsl:when test="$mbk and $abk and $mbk/@code != $abk/@code">
+        <xsl:choose>
+          <xsl:when test="$role = 'main'"><xsl:value-of select="$mbk/@code"/></xsl:when>
+          <xsl:otherwise><xsl:value-of select="$abk/@code"/></xsl:otherwise>
+        </xsl:choose>
+      </xsl:when>
+      <xsl:when test="$mbk and $abk">
+        <xsl:choose>
+          <xsl:when test="$role = 'main'">1</xsl:when>
+          <xsl:otherwise><xsl:value-of select="$alt-number"/></xsl:otherwise>
+        </xsl:choose>
+      </xsl:when>
+      <xsl:otherwise>?</xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
+
+  <!-- comparable key chapter*1000 + verse (verse letters dropped) for the first
+       C:V of a reference, and for its last verse ("13:1-23" -> 13001 / 13023) -->
+  <xsl:template name="start-key">
+    <xsl:param name="ref"/>
+    <xsl:variable name="first" select="normalize-space(substring-before(concat(translate($ref, '—;', '-,'), ','), ','))"/>
+    <xsl:variable name="cv" select="substring-before(concat($first, '-'), '-')"/>
+    <xsl:value-of select="1000 * number(normalize-space(substring-before($cv, ':')))
+                          + number(normalize-space(translate(substring-after($cv, ':'), $LC, '')))"/>
+  </xsl:template>
+  <xsl:template name="end-key">
+    <xsl:param name="ref"/>
+    <xsl:variable name="chap">
+      <xsl:call-template name="end-chapter">
+        <xsl:with-param name="text" select="$ref"/>
+        <xsl:with-param name="chapter" select="''"/>
+      </xsl:call-template>
+    </xsl:variable>
+    <xsl:variable name="last">
+      <xsl:call-template name="last-word">
+        <xsl:with-param name="s" select="normalize-space(translate($ref, ',-—:;', '     '))"/>
+      </xsl:call-template>
+    </xsl:variable>
+    <xsl:value-of select="1000 * number($chap) + number(translate($last, $LC, ''))"/>
+  </xsl:template>
+
   <!-- Emit one <elementum> for option number $seg of a reading block. -->
   <xsl:template name="emit-option">
     <xsl:param name="body"/>
@@ -187,6 +371,8 @@
     <xsl:param name="is-reading"/>
     <xsl:param name="multi"/>
     <xsl:param name="header-address"/>
+    <xsl:param name="optio" select="''"/>
+    <xsl:param name="header-confer" select="''"/>
 
     <!-- nodes of this segment: those with exactly $seg-1 preceding OR-delimiters,
          delimiters themselves excluded -->
@@ -199,11 +385,16 @@
     <xsl:variable name="address">
       <xsl:choose>
         <xsl:when test="$seg = 1 and string($header-address)"><xsl:value-of select="$header-address"/></xsl:when>
-        <xsl:otherwise><xsl:value-of select="normalize-space($seg-nodes[self::a][1])"/></xsl:otherwise>
+        <xsl:otherwise>
+          <xsl:call-template name="strip-see">
+            <xsl:with-param name="raw" select="normalize-space($seg-nodes[self::a][1])"/>
+          </xsl:call-template>
+        </xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
 
-    <xsl:variable name="bk" select="$books[starts-with($address, @name)][1]"/>
+    <!-- the book name must be followed by a space: "John" must not match "Johnny" -->
+    <xsl:variable name="bk" select="$books[starts-with(concat($address, ' '), concat(@name, ' '))][1]"/>
     <xsl:variable name="code">
       <xsl:choose>
         <xsl:when test="$bk"><xsl:value-of select="$bk/@code"/></xsl:when>
@@ -214,9 +405,15 @@
     <elementum nomen="{$nomen}">
       <!-- @optio only when this block has alternatives. For "different passage"
            alternatives optio = book code; unknown -> "?" (reported, file still written). -->
-      <xsl:if test="$multi">
-        <xsl:attribute name="optio"><xsl:value-of select="$code"/></xsl:attribute>
-        <xsl:if test="$code = '?'">
+      <xsl:variable name="eff-optio">
+        <xsl:choose>
+          <xsl:when test="string($optio)"><xsl:value-of select="$optio"/></xsl:when>
+          <xsl:when test="$multi"><xsl:value-of select="$code"/></xsl:when>
+        </xsl:choose>
+      </xsl:variable>
+      <xsl:if test="string($eff-optio)">
+        <xsl:attribute name="optio"><xsl:value-of select="$eff-optio"/></xsl:attribute>
+        <xsl:if test="$eff-optio = '?'">
           <xsl:message>tabgha: could not derive @optio (nomen=<xsl:value-of select="$nomen"/>, address="<xsl:value-of select="$address"/>") — left optio="?"</xsl:message>
         </xsl:if>
       </xsl:if>
@@ -225,6 +422,18 @@
 
       <xsl:if test="string($address)">
         <referentia elibro="{$code}">
+          <!-- "See John 15:16" -> <confer/> before the reference -->
+          <xsl:variable name="confer">
+            <xsl:choose>
+              <xsl:when test="$seg = 1 and string($header-address)"><xsl:value-of select="$header-confer"/></xsl:when>
+              <xsl:otherwise>
+                <xsl:call-template name="has-see">
+                  <xsl:with-param name="raw" select="$seg-nodes[self::a][1]"/>
+                </xsl:call-template>
+              </xsl:otherwise>
+            </xsl:choose>
+          </xsl:variable>
+          <xsl:if test="string($confer)"><confer/></xsl:if>
           <xsl:if test="$bk">
             <xsl:variable name="numeric" select="normalize-space(substring-after($address, $bk/@name))"/>
             <xsl:choose>
@@ -297,7 +506,8 @@
   </xsl:template>
 
   <!-- ===== reference list parsing =================================================
-       Grammar handled: comma-separated references; ' and ' also separates verses.
+       Grammar handled: references separated by ',' (same chapter) or ';' (the next one
+       names a new chapter, so both split alike); ' and ' also separates verses.
        A reference is either C:V, C:V-V2 (range), C:V-C2:V2 (cross-chapter range), or
        a bare V or V-V2 (chapter carried over from the last one named).
        Single verse  -> bare <cap>/<vers>;  contiguous range -> <ab>..</ab> <ad>..</ad>.
@@ -305,7 +515,7 @@
   <xsl:template name="emit-references">
     <xsl:param name="text"/>
     <xsl:param name="chapter"/>
-    <xsl:variable name="t" select="normalize-space($text)"/>
+    <xsl:variable name="t" select="normalize-space(translate($text, ';', ','))"/>
     <xsl:if test="$t != ''">
       <xsl:variable name="first" select="normalize-space(substring-before(concat($t, ','), ','))"/>
       <xsl:variable name="rest"  select="substring-after($t, ',')"/>
@@ -353,7 +563,9 @@
   <xsl:template name="emit-item">
     <xsl:param name="item"/>
     <xsl:param name="chapter"/>
-    <xsl:variable name="it" select="normalize-space($item)"/>
+    <!-- an em dash marks a range whose two ends are in different chapters
+         (Matthew 26:14—27:66); parse it like '-' -->
+    <xsl:variable name="it" select="normalize-space(translate($item, '—', '-'))"/>
     <xsl:if test="$it != ''">
       <!-- split on '-' first: either side of a range may name its own chapter -->
       <xsl:variable name="from" select="normalize-space(substring-before(concat($it, '-'), '-'))"/>
@@ -406,7 +618,7 @@
           <xsl:with-param name="text" select="substring-after($text, ':')"/>
           <xsl:with-param name="chapter">
             <xsl:call-template name="last-word">
-              <xsl:with-param name="s" select="normalize-space(translate(substring-before($text, ':'), '-', ' '))"/>
+              <xsl:with-param name="s" select="normalize-space(translate(substring-before($text, ':'), '-—', '  '))"/>
             </xsl:call-template>
           </xsl:with-param>
         </xsl:call-template>
@@ -437,7 +649,7 @@
   <xsl:template name="emit-strophe-refs">
     <xsl:param name="text"/>
     <xsl:param name="chapter"/>
-    <xsl:variable name="t" select="normalize-space($text)"/>
+    <xsl:variable name="t" select="normalize-space(translate($text, ';', ','))"/>
     <xsl:if test="$t != ''">
       <xsl:variable name="first" select="normalize-space(substring-before(concat($t, ','), ','))"/>
       <xsl:variable name="rest" select="substring-after($t, ',')"/>

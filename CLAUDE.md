@@ -47,15 +47,19 @@ Sources are multiple (web + local) and multilingual.
   conventions as provisional and re-confirm. Key rule learned so far: inside `<referentia>`
   (which lists references and must carry an `elibro` attribute), a single verse is a bare
   `<cap>/<vers>`, while a contiguous range is bracketed `<ab>…</ab>` … `<ad>…</ad>`.
-- **Citation grammar:** operator precedence is `:` / `,` / `and` / `-`, outermost first. `,`
-  separates strophes in psalms, so `3 and 5` is one strophe. `:` can also appear inside a range
+- **Citation grammar:** (a non-breaking space in a reference counts as a space; a final full stop is dropped; "See John 15:16" → `<confer/>` as the first child of `<referentia>`) operator precedence is `:` / `,` (or `;`) / `and` / `-`, outermost first.
+  `,` separates references in the same chapter, `;` references in different chapters
+  (`Hebrews 4:14-16; 5:7-9`); the item after `;` names its chapter, so both split alike. `,` and `;`
+  separate strophes in psalms, so `3 and 5` is one strophe. `:` can also appear inside a range
   (`5:10-6:3`) or an `and` item: it sets the current chapter until the next `:`, so the last verse
   of `5:10-6:3, 5` is 6:5.
 - **`<die>` / `<gradus>` come from the source, never from the user, and are included whenever
   possible.** `<die>` is either a date, day + month as written near the title with the year
   dropped (`May 25`), or a day of the liturgical calendar (`Monday in the 6th week of Ordinary
   Time`; `Saturday after the Second Sunday after Pentecost` for the Memorial of the Immaculate
-  Heart of Mary). Which form applies when is not settled yet. `<gradus>` = Latin rank from the title:
+  Heart of Mary). Fixed-date celebrations take the date; movable ones take the liturgical day,
+  in the website's wording. When the website does not name the day (it titles only the
+  celebration), it is taken from the official liturgical books, via a table in the stylesheet. `<gradus>` = Latin rank from the title:
   Solemnity → `solemnitas`, Feast → `festum`, Memorial → `memoria`; an Optional Memorial
   gets no `<gradus>`. Omit the element when the source has no such information (no empty
   elements).
@@ -67,9 +71,21 @@ Sources are multiple (web + local) and multilingual.
   numbered the same way; when there are several options after one reading, a letter is added:
   `optio="1a"`, `optio="1b"`.
 - **"or" blocks:** a source block introduced by "or" ("Or", "Or:") takes the same `@nomen` as the
-  block before it. It is an alternative to that block, so the two are joined by `<vel/>`.
+  block before it. It is an alternative to that block, so the two are joined by `<vel/>`. When
+  no other option applies (like Sunday years `a`/`b`/`c`), a longer and a shorter form of the
+  same reading get `optio="longior"` and `optio="brevior"`. The stylesheet treats the "or"
+  block as the shorter form when it is in the same book and starts inside the main reading's
+  range; different books get their book codes; different passages of the same book are
+  numbered `optio="1"`, `optio="2"`… (All Souls: Romans 5:5-11 or Romans 6:3-9); a book that
+  is not recognised gets `optio="?"` and a report.
 - **XSLT namespace note (verified 2026-06-05):** `xmllint --html --xmlout` emits a
   **no-namespace** tree, so the HTML stylesheet matches **bare** element names (`div`, `h3`).
   The namespace gotcha *does* apply to ODT's `content.xml`, which is namespaced — those
   stylesheets must bind prefixes (e.g. `text:p`) or they silently match nothing.
+- **Book table lives outside this repo:** `~/Documents/Liturgie/xml/xsl/i10n.xml` (the liturgy
+  project's file; the user allows editing its `xsl/` folder). Each `<liber elibro="Lc">` has
+  `<versio lingua="en" siglum="Luke">`: the siglum is the book's short name as the source writes
+  it, and is what tabgha matches (driver option `-b`). The Psalms have no `<liber>` there, so the
+  stylesheet adds `Psalm`/`Psalms` → `Ps` itself. The file has an external DTD; the driver runs
+  `xsltproc --novalid --nonet` so it is never fetched.
 - **Run the reference transform:** `bin/tabgha -o example example-input.html` → `build/example-en.xml`.

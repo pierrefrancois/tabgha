@@ -33,6 +33,7 @@ bin/tabgha [options] <source>      # <source> = URL or local .html file
   -l LANG    language code -> root @lingua and filename (default: en)
   -o KEY     output day-key -> build/<KEY>-<LANG>.xml (default: out)
   -s FILE    stylesheet (default: xslt/usccb-readings.xsl)
+  -b FILE    book table (default: $TABGHA_I10N, else ~/Documents/Liturgie/xml/xsl/i10n.xml)
   -k         keep intermediate files
 ```
 
@@ -56,11 +57,20 @@ build/                     generated output (gitignored)
 ## Status — what works vs. TODO
 
 **Working** against the reference pair:
-- `<die>` from the pager date just above the title (`May 25, 2026` → `May 25`) and
+- `<die>`: the date for a fixed-date celebration, from the pager just above the title
+  (`July 25, 2026` → `July 25`); the liturgical day for a movable one, in the website's
+  wording when its title names the day (`Monday of the Fourteenth Week in Ordinary
+  Time`), else from a small table following the liturgical books (Mary, Mother of the
+  Church → `Monday after Pentecost`); and
   `<gradus>` from the rank named in the title (Solemnity → `solemnitas`, Feast →
   `festum`, Memorial → `memoria`; none for an Optional Memorial); each element is omitted when the page has none;
 - an `<elementum>` per reading block, with the correct `@nomen`
-  (`lectio` / `psalmus-responsorialis` / `alleluia` / `evangelium`);
+  (`lectio` / `psalmus-responsorialis` / `alleluia` / `versus-ante-evangelium` (Lent: "Verse Before the Gospel", a plain `<para>`) / `evangelium`);
+- **"or" blocks**: a block named "or" / "Or" / "Or:" takes the `@nomen` of the block
+  before it and is joined to it by `<vel/>`; a shorter form of the same reading gives
+  `optio="longior"` / `optio="brevior"`, different books their book codes, different
+  passages of the same book `optio="1"`, `"2"`…, an unrecognised book `optio="?"` + a
+  stderr report;
 - **OR-split**: a block containing an "OR:" marker becomes several same-`@nomen`
   elementa joined by `<vel/>`, each with its own `<referentia>`. `@optio` is set
   to the book code for "different passage" alternatives (Gen/Act in the example),
@@ -68,7 +78,9 @@ build/                     generated output (gitignored)
 - `<referentia>` with mandatory `@elibro`, references parsed per the rule
   *single verse = bare `<cap>/<vers>`, contiguous range = `<ab>…</ab> <ad>…</ad>`*
   (Genesis, Psalm verses, and Gospel match the gold file). A range may cross chapters
-  (`5:10-6:3`), and a bare verse after it stays in the chapter named last;
+  (`5:10-6:3`), and a bare verse after it stays in the chapter named last. References in
+  the same chapter are separated by `,`, references in different chapters by `;`
+  (`Hebrews 4:14-16; 5:7-9`, `Psalm 42:3, 5; 43:3, 4`);
 - `<thema/>` / `<verbum-domini/>` placement; `<br>` → `<l/>`; `&nbsp;` stripped;
 - **quote detection**: recursive, nesting-aware, per-language `<q>` wrapping
   (`en` = `“ ”` + `‘ ’`; `fr` = `« »`; `de` = `» «` + `„ “`), with edge spaces trimmed
