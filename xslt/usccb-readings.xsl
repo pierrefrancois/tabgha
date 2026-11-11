@@ -207,7 +207,7 @@
         <xsl:otherwise><xsl:value-of select="$base-nomen"/></xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
-    <xsl:variable name="is-reading" select="starts-with($nomen, 'lectio') or $nomen = 'evangelium'"/>
+    <xsl:variable name="is-reading" select="starts-with($nomen, 'lectio') or $nomen = 'epistula' or $nomen = 'evangelium'"/>
 
     <!-- @optio of a block that has "or" alternatives, or is one (empty otherwise):
          a shorter form of the same reading -> longior / brevior; a different passage ->
@@ -316,6 +316,7 @@
     <xsl:param name="name"/>
     <xsl:choose>
       <xsl:when test="starts-with($name, 'Reading')">lectio</xsl:when>
+      <xsl:when test="starts-with($name, 'Epistle')">epistula</xsl:when>
       <xsl:when test="contains($name, 'Psalm')">psalmus-responsorialis</xsl:when>
       <xsl:when test="contains($name, 'Alleluia') or contains($name, 'Acclamation')">alleluia</xsl:when>
       <xsl:when test="contains(translate($name, 'VERSBFOGL', 'versbfogl'), 'verse before the gospel')">versus-ante-evangelium</xsl:when>
