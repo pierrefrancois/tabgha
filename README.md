@@ -65,7 +65,10 @@ build/                     generated output (gitignored)
   `<gradus>` from the rank named in the title (Solemnity → `solemnitas`, Feast →
   `festum`, Memorial → `memoria`; none for an Optional Memorial); each element is omitted when the page has none;
 - an `<elementum>` per reading block, with the correct `@nomen`
-  (`lectio` / `psalmus-responsorialis` / `alleluia` / `versus-ante-evangelium` (Lent: "Verse Before the Gospel", a plain `<para>`) / `evangelium`);
+  (`lectio`, or `lectio-prima` / `lectio-secunda` when there are two readings before the
+  Gospel / `psalmus-responsorialis` / `alleluia` / `versus-ante-evangelium` (Lent: "Verse Before the Gospel", a plain `<para>`) / `evangelium`);
+- **Palm Sunday**: the "At the Procession with Palms" Gospel is skipped (Missal, not
+  Lectionary) and "At the Mass - " is dropped from the first reading's name;
 - **"or" blocks**: a block named "or" / "Or" / "Or:" takes the `@nomen` of the block
   before it and is joined to it by `<vel/>`; a shorter form of the same reading gives
   `optio="longior"` / `optio="brevior"`, different books their book codes, different

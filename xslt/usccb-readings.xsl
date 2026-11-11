@@ -137,7 +137,15 @@
 
   <!-- A reading block: <div class="... b-verse ..."> -->
   <xsl:variable name="verse-blocks"
-      select="//div[contains(concat(' ', normalize-space(@class), ' '), ' b-verse ')]"/>
+      select="//div[contains(concat(' ', normalize-space(@class), ' '), ' b-verse ')]
+               [not(starts-with(normalize-space(.//h3[contains(concat(' ', normalize-space(@class), ' '), ' name ')]), 'At the Procession'))]"/>
+  <!-- the "Reading ..." blocks before the Gospel ("At the Mass - Reading I" on Palm
+       Sunday); "or" blocks are not counted -->
+  <xsl:variable name="reading-blocks"
+      select="$verse-blocks[starts-with(normalize-space(translate(.//h3[contains(concat(' ', normalize-space(@class), ' '), ' name ')], '&#xA0;', ' ')), 'Reading')
+                            or starts-with(normalize-space(translate(.//h3[contains(concat(' ', normalize-space(@class), ' '), ' name ')], '&#xA0;', ' ')), 'At the Mass - Reading')]"/>
+  <!-- Palm Sunday: the Gospel "At the Procession with Palms" is not part of the
+       Lectionary (it belongs to the Missal), so that block is left out -->
 
   <xsl:template match="/">
     <romanliturgy lingua="{$lingua}">
@@ -175,7 +183,7 @@
     </xsl:variable>
     <xsl:variable name="next-is-or" select="translate(translate($next-name, ':', ''), 'OR', 'or') = 'or'"/>
 
-    <xsl:variable name="nomen">
+    <xsl:variable name="base-nomen">
       <xsl:call-template name="nomen-of">
         <xsl:with-param name="name">
           <xsl:choose>
@@ -185,7 +193,21 @@
         </xsl:with-param>
       </xsl:call-template>
     </xsl:variable>
-    <xsl:variable name="is-reading" select="$nomen = 'lectio' or $nomen = 'evangelium'"/>
+    <!-- two readings before the Gospel (Sundays, solemnities): lectio-prima and
+         lectio-secunda; a single reading, or more than two (Easter Vigil), stays lectio -->
+    <xsl:variable name="reading-block" select="(self::node()[not($is-or)] | $main[$is-or])[1]"/>
+    <xsl:variable name="nomen">
+      <xsl:choose>
+        <xsl:when test="$base-nomen = 'lectio' and count($reading-blocks) = 2">
+          <xsl:choose>
+            <xsl:when test="generate-id($reading-block) = generate-id($reading-blocks[1])">lectio-prima</xsl:when>
+            <xsl:otherwise>lectio-secunda</xsl:otherwise>
+          </xsl:choose>
+        </xsl:when>
+        <xsl:otherwise><xsl:value-of select="$base-nomen"/></xsl:otherwise>
+      </xsl:choose>
+    </xsl:variable>
+    <xsl:variable name="is-reading" select="starts-with($nomen, 'lectio') or $nomen = 'evangelium'"/>
 
     <!-- @optio of a block that has "or" alternatives, or is one (empty otherwise):
          a shorter form of the same reading -> longior / brevior; a different passage ->
@@ -251,7 +273,12 @@
   <!-- a block's name (h3.name) and reference (div.address a), normalized
        (a non-breaking space, as in "Or&#xA0;", counts as a space) -->
   <xsl:template match="div" mode="block-name">
-    <xsl:value-of select="normalize-space(translate(.//h3[contains(concat(' ', normalize-space(@class), ' '), ' name ')], '&#xA0;', ' '))"/>
+    <xsl:variable name="n" select="normalize-space(translate(.//h3[contains(concat(' ', normalize-space(@class), ' '), ' name ')], '&#xA0;', ' '))"/>
+    <xsl:choose>
+      <!-- Palm Sunday: "At the Mass - Reading I" -> "Reading I" -->
+      <xsl:when test="starts-with($n, 'At the Mass - ')"><xsl:value-of select="substring-after($n, 'At the Mass - ')"/></xsl:when>
+      <xsl:otherwise><xsl:value-of select="$n"/></xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
   <xsl:template match="div" mode="block-address">
     <xsl:call-template name="strip-see">
@@ -291,7 +318,7 @@
       <xsl:when test="starts-with($name, 'Reading')">lectio</xsl:when>
       <xsl:when test="contains($name, 'Psalm')">psalmus-responsorialis</xsl:when>
       <xsl:when test="contains($name, 'Alleluia') or contains($name, 'Acclamation')">alleluia</xsl:when>
-      <xsl:when test="contains($name, 'Verse Before the Gospel')">versus-ante-evangelium</xsl:when>
+      <xsl:when test="contains(translate($name, 'VERSBFOGL', 'versbfogl'), 'verse before the gospel')">versus-ante-evangelium</xsl:when>
       <xsl:when test="contains($name, 'Gospel')">evangelium</xsl:when>
       <xsl:otherwise>ignotum</xsl:otherwise>
     </xsl:choose>

@@ -78,6 +78,13 @@ Sources are multiple (web + local) and multilingual.
   range; different books get their book codes; different passages of the same book are
   numbered `optio="1"`, `optio="2"`… (All Souls: Romans 5:5-11 or Romans 6:3-9); a book that
   is not recognised gets `optio="?"` and a report.
+- **Reading names:** a day with two readings before the Gospel (every Sunday, Palm Sunday
+  included, and other solemnities) has `nomen="lectio-prima"` and `nomen="lectio-secunda"`; `lectio`
+  is kept for days with a single reading and for exceptional celebrations like the Easter Vigil.
+  The stylesheet counts the "Reading" blocks, "or" blocks excluded: exactly two → prima/secunda.
+- **Palm Sunday:** the block "At the Procession with Palms - Gospel" is skipped (it belongs to the
+  Missal, not the Lectionary; it will be added there later), and "At the Mass - " is dropped from
+  the first reading's name.
 - **XSLT namespace note (verified 2026-06-05):** `xmllint --html --xmlout` emits a
   **no-namespace** tree, so the HTML stylesheet matches **bare** element names (`div`, `h3`).
   The namespace gotcha *does* apply to ODT's `content.xml`, which is namespaced — those
